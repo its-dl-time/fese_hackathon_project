@@ -1,113 +1,433 @@
-# Smart Contract Project - Hướng Dẫn Toàn Diện
+# 📘 Smart Contract Project - Hướng Dẫn Từng Bước
 
-Dự án này cung cấp bộ source code hoàn chỉnh để phát triển, triển khai (deploy), mô phỏng (simulate) và tương tác (interact) với Smart Contract trên mạng lưới Ethereum (hoặc các mạng tương thích EVM).
+> Dự án này giúp bạn phát triển, triển khai và tương tác với Smart Contract trên mạng Ethereum (hoặc các mạng tương thích EVM) một cách dễ dàng - ngay cả khi bạn chưa biết code.
 
+---
 
-Cách Code hoạt động (Architecture)
-Quy trình hoạt động của bộ mã nguồn này như sau:
+## 📋 Mục Lục
 
--- Biên dịch (Compile): Code Solidity (.sol) được Hardhat biên dịch thành file JSON (Artifacts) chứa ABI (giao diện hàm) và Bytecode (mã máy). 
-Kết nối (Provider & Signer): 
--- Provider: Là cổng kết nối tới Blockchain (thông qua RPC URL). 
--- Wallet/Signer: Là ví chứa Private Key để ký xác nhận giao dịch (trả phí gas). 
-Triển khai (Deploy): 
--- Code gửi một transaction đặc biệt chứa Bytecode lên mạng lưới. 
--- Mạng lưới xác nhận và trả về địa chỉ Contract mới (Contract Address). 
-Tương tác (Interact): 
--- Code dùng Contract Address + ABI để biết contract có hàm gì. 
--- Gửi transaction để thay đổi dữ liệu (tốn gas) hoặc gọi call để đọc dữ liệu (miễn phí).
+1. [Smart Contract hoạt động như thế nào?](#-smart-contract-hoạt-động-như-thế-nào)
+2. [Chuẩn bị môi trường](#-bước-1-chuẩn-bị-môi-trường)
+3. [Cài đặt dự án](#-bước-2-cài-đặt-dự-án)
+4. [Cấu hình bảo mật](#-bước-3-cấu-hình-bảo-mật)
+5. [Lấy Private Key và ETH miễn phí](#-bước-4-lấy-private-key-và-eth-miễn-phí)
+6. [Triển khai Contract lên Blockchain](#-bước-5-triển-khai-contract-lên-blockchain)
+7. [Tương tác với Contract](#-bước-6-tương-tác-với-contract)
+8. [Xử lý lỗi thường gặp](#-xử-lý-lỗi-thường-gặp)
 
+---
 
-## Cài đặt Môi trường (Installation)
+## 🔍 Smart Contract hoạt động như thế nào?
 
-Trước khi bắt đầu, hãy đảm bảo máy tính đã cài đặt Node.js và Git.
+Hãy tưởng tượng Smart Contract như một **máy bán hàng tự động** trên Blockchain:
 
--- Chạy lệnh sau để cài đặt các thư viện cần thiết:
-```bash
-npm install
-# hoặc
-yarn install
-Cấu hình Môi trường (.env)
-Bạn cần tạo một file .env tại thư mục gốc để chứa các thông tin bảo mật. Tuyệt đối không push file này lên Git.
 ```
--- Tạo file .env với nội dung mẫu:
+┌─────────────────────────────────────────────────────┐
+│  1. VIẾT CODE (Solidity)                            │
+│     Như viết "công thức" cho máy bán hàng           │
+└─────────────────┬───────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────────────────┐
+│  2. BIÊN DỊCH (Compile)                             │
+│     Chuyển code thành ngôn ngữ máy tính hiểu        │
+│     → Tạo file ABI (danh sách chức năng)            │
+│     → Tạo Bytecode (mã máy)                         │
+└─────────────────┬───────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────────────────┐
+│  3. KẾT NỐI VÍ                                      │
+│     Provider: Cổng kết nối đến Blockchain           │
+│     Wallet: Ví để ký giao dịch và trả phí gas      │
+└─────────────────┬───────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────────────────┐
+│  4. TRIỂN KHAI (Deploy)                             │
+│     Gửi Bytecode lên mạng → Nhận địa chỉ Contract   │
+└─────────────────┬───────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────────────────┐
+│  5. TƯƠNG TÁC (Interact)                            │
+│     Gọi hàm để đọc/ghi dữ liệu trên Blockchain      │
+└─────────────────────────────────────────────────────┘
+```
 
-Đoạn mã
+---
 
+## 🛠 Bước 1: Chuẩn bị môi trường
+
+### Cài đặt các công cụ cần thiết
+
+**Windows:**
+1. Tải **Node.js** từ [nodejs.org](https://nodejs.org) (chọn bản LTS)
+2. Tải **Git** từ [git-scm.com](https://git-scm.com)
+3. Cài đặt **MetaMask** extension cho Chrome/Firefox
+
+**macOS/Linux:**
+```bash
+# Cài Node.js qua Homebrew (macOS)
+brew install node
+
+# Hoặc qua apt (Ubuntu/Debian)
+sudo apt install nodejs npm
+
+# Cài Git
+brew install git  # macOS
+sudo apt install git  # Linux
+```
+
+### Kiểm tra cài đặt thành công
+
+Mở Terminal/Command Prompt và chạy:
+
+```bash
+node --version   # Phải hiện v18.x.x trở lên
+npm --version    # Phải hiện 9.x.x trở lên
+git --version    # Phải hiện git version 2.x.x
+```
+
+---
+
+## 📦 Bước 2: Cài đặt dự án
+
+### Tải code về máy
+
+```bash
+# Di chuyển đến thư mục bạn muốn lưu dự án
+cd Desktop
+
+# Clone dự án (hoặc tải ZIP từ GitHub)
+git clone <link-repository-cua-ban>
+cd smart-contract-project
+```
+
+### Cài đặt thư viện
+
+```bash
+# Cài tất cả thư viện cần thiết (chờ 1-2 phút)
+npm install
+```
+
+**Giải thích:** Lệnh này sẽ tải về tất cả các công cụ cần thiết như Hardhat, Ethers.js, v.v.
+
+---
+
+## 🔐 Bước 3: Cấu hình bảo mật
+
+### Tạo file `.env`
+
+File này chứa thông tin nhạy cảm như Private Key. **TUYỆT ĐỐI không chia sẻ file này!**
+
+**Cách tạo:**
+
+1. Tạo file mới tên `.env` ở thư mục gốc dự án
+2. Copy nội dung sau vào:
+
+```env
 PRIVATE_KEY=your_private_key_here
-RPC_URL=[https://sepolia.infura.io/v3/your_api_key](https://sepolia.infura.io/v3/your_api_key)
+RPC_URL=https://sepolia.infura.io/v3/your_api_key
 ETHERSCAN_API_KEY=your_etherscan_api_key
-Hướng dẫn lấy Key và Công cụ (MetaMask, Faucet, Scan)
-Phần này hướng dẫn cách chuẩn bị ví và nguyên liệu để chạy trên Testnet/Mainnet.
+```
 
-1. Lấy Private Key từ MetaMask
--- Mở tiện ích MetaMask trên trình duyệt. -- Bấm vào dấu 3 chấm ở góc phải -> Chọn Account Details (Chi tiết tài khoản). -- Chọn Show Private Key (Hiện khóa riêng tư). -- Nhập mật khẩu ví MetaMask để xác nhận. -- Copy chuỗi ký tự đó và dán vào biến PRIVATE_KEY trong file .env. -- Cảnh báo: Không bao giờ chia sẻ Private Key cho bất kỳ ai.
+3. **Chưa điền gì cả!** Bạn sẽ điền ở bước tiếp theo.
 
-2. Lấy ETH Testnet (Faucet)
-Để deploy lên mạng thử nghiệm (như Sepolia, Goerli, BNB Testnet), bạn cần có token để trả phí gas. -- Truy cập các trang Faucet uy tín (ví dụ: sepoliafaucet.com, alchemy.com/faucets, faucets.chain.link). -- Dán địa chỉ ví công khai (Public Address) của bạn vào. -- Bấm "Send Me ETH". -- Chờ vài phút để tiền về ví.
+---
 
-3. Kiểm tra giao dịch trên Scan
-Khi deploy hoặc tương tác xong, bạn sẽ nhận được một Transaction Hash (TxHash). -- Truy cập Block Explorer tương ứng với mạng bạn dùng (ví dụ: sepolia.etherscan.io cho Sepolia, bscscan.com cho BNB Chain). -- Dán TxHash hoặc địa chỉ Contract vào ô tìm kiếm. -- Bạn sẽ thấy trạng thái giao dịch (Success/Fail) và dữ liệu chi tiết.
+## 🔑 Bước 4: Lấy Private Key và ETH miễn phí
 
-Hướng dẫn Deploy (Triển khai)
-Dự án hỗ trợ 2 phương thức deploy: thông qua Hardhat Plugin và Deploy thô (Raw).
+### 4.1. Lấy Private Key từ MetaMask
 
-Cách 1: Deploy qua Hardhat (Dùng cho Local/Development)
-Sử dụng file deploy.ts. Cách này tận dụng hệ sinh thái Hardhat, thích hợp để test nhanh trên mạng Localhost hoặc Testnet đã cấu hình trong hardhat.config.ts.
+> ⚠️ **CẢNH BÁO:** Private Key giống như mật khẩu ngân hàng. Không bao giờ chia sẻ cho ai!
 
--- Chạy node local (nếu test local):
+**Hướng dẫn chi tiết:**
 
-Bash
+```
+1. Mở MetaMask trên trình duyệt
+   ↓
+2. Click vào dấu 3 chấm (⋮) ở góc phải trên
+   ↓
+3. Chọn "Account Details" (Chi tiết tài khoản)
+   ↓
+4. Click "Show Private Key" (Hiện khóa riêng tư)
+   ↓
+5. Nhập mật khẩu MetaMask
+   ↓
+6. Copy chuỗi ký tự (bắt đầu bằng 0x...)
+   ↓
+7. Dán vào PRIVATE_KEY trong file .env
+```
 
-npx hardhat node
--- Mở terminal mới và chạy lệnh deploy:
+**Ví dụ:**
+```env
+PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+```
 
-Bash
+### 4.2. Lấy ETH miễn phí (Testnet)
 
+Để triển khai Smart Contract, bạn cần ETH để trả phí gas. Trên mạng thử nghiệm, bạn có thể xin miễn phí!
+
+**Các nguồn Faucet uy tín:**
+
+| Mạng | Website Faucet |
+|------|----------------|
+| Sepolia | [sepoliafaucet.com](https://sepoliafaucet.com) |
+| Sepolia | [faucets.chain.link](https://faucets.chain.link) |
+| BNB Testnet | [testnet.bnbchain.org/faucet-smart](https://testnet.bnbchain.org/faucet-smart) |
+
+**Hướng dẫn xin ETH:**
+
+```
+1. Mở MetaMask, copy địa chỉ ví (Public Address)
+   Ví dụ: 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb
+   ↓
+2. Vào một trong các website Faucet ở trên
+   ↓
+3. Dán địa chỉ ví vào ô "Wallet Address"
+   ↓
+4. Hoàn thành Captcha (nếu có)
+   ↓
+5. Click "Send Me ETH"
+   ↓
+6. Chờ 1-3 phút, kiểm tra ví MetaMask
+```
+
+### 4.3. Lấy RPC URL
+
+RPC URL là cổng kết nối đến Blockchain. Bạn có thể dùng dịch vụ miễn phí:
+
+**Cách lấy từ Infura:**
+
+```
+1. Truy cập infura.io → Sign Up (miễn phí)
+   ↓
+2. Tạo Project mới → Chọn "Web3 API"
+   ↓
+3. Copy đường dẫn Sepolia Endpoint
+   Ví dụ: https://sepolia.infura.io/v3/abc123xyz...
+   ↓
+4. Dán vào RPC_URL trong file .env
+```
+
+**Hoặc dùng RPC công khai:**
+```env
+RPC_URL=https://eth-sepolia.public.blastapi.io
+```
+
+### 4.4. File `.env` hoàn chỉnh
+
+```env
+PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+RPC_URL=https://sepolia.infura.io/v3/abc123xyz
+ETHERSCAN_API_KEY=  # Có thể để trống nếu chưa cần verify contract
+```
+
+---
+
+## 🚀 Bước 5: Triển khai Contract lên Blockchain
+
+Có 2 cách triển khai. Nếu bạn mới bắt đầu, hãy dùng **Cách 1**.
+
+### ✅ Cách 1: Deploy qua Hardhat (Khuyên dùng)
+
+**Phù hợp:** Người mới, test nhanh trên Local hoặc Testnet
+
+**Lệnh triển khai:**
+
+```bash
+# Test trên mạng local (không tốn tiền thật)
 npx hardhat run scripts/deploy.ts --network localhost
--- Lưu lại địa chỉ Contract vừa được in ra terminal.
 
-Cách 2: Deploy Raw (Dùng cho Custom/System Integration)
-Sử dụng file deploy.system.ts. Cách này sử dụng thư viện ethers hoặc web3 trực tiếp để tạo transaction deploy mà không phụ thuộc vào hre (Hardhat Runtime Environment). Thường dùng khi tích hợp vào backend server hoặc tool riêng.
+# Triển khai lên Sepolia Testnet
+npx hardhat run scripts/deploy.ts --network sepolia
+```
 
--- Chạy lệnh:
+**Kết quả:**
+```
+Deploying contract...
+Contract deployed to: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+✅ Deploy thành công!
+```
 
-Bash
+💾 **LƯU LẠI ĐỊA CHỈ CONTRACT NÀY!** Bạn sẽ cần nó để tương tác sau này.
 
+### 🔧 Cách 2: Deploy Raw (Nâng cao)
+
+**Phù hợp:** Tích hợp vào hệ thống backend, automation
+
+```bash
 npx ts-node scripts/deploy.system.ts
--- Script này sẽ tự động đọc PRIVATE_KEY và RPC_URL từ file .env để kết nối và đẩy contract lên mạng.
+```
 
-Hướng dẫn Tương tác và Mô phỏng
-1. Chạy Mô phỏng (Simulation) - simulate.ts
-Script này chạy toàn bộ quy trình logic trên môi trường Local hoặc Forking mà không tốn tiền thật. Dùng để kiểm tra logic code có chạy đúng hay không.
+Script này kết nối trực tiếp với RPC mà không qua Hardhat.
 
--- Chức năng: Deploy contract ảo -> Gọi hàm -> In kết quả -> Reset. -- Lệnh chạy:
+---
 
-Bash
+## 💬 Bước 6: Tương tác với Contract
 
+### 6.1. Chạy mô phỏng (Không tốn tiền)
+
+Trước khi tương tác thật, hãy test trên môi trường ảo:
+
+```bash
 npx hardhat run scripts/simulate.ts
-2. Tương tác On-Chain (Live) - interact_live.ts
-Script này dùng để gọi hàm trên Smart Contract đã được deploy trên mạng thật (Testnet/Mainnet).
+```
 
--- Bước 1: Mở file interact_live.ts, tìm biến CONTRACT_ADDRESS và thay bằng địa chỉ contract bạn đã deploy ở bước trước. -- Bước 2: Chạy lệnh:
+**Kết quả mẫu:**
+```
+Simulating contract interactions...
+✓ Calling function setGreeting("Hello Blockchain")
+✓ Reading greeting: "Hello Blockchain"
+✓ Simulation completed successfully!
+```
 
-Bash
+### 6.2. Tương tác thật trên Blockchain
 
+**Bước 1:** Mở file `scripts/interact_live.ts`
+
+**Bước 2:** Tìm dòng:
+```typescript
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+```
+
+**Bước 3:** Thay bằng địa chỉ contract bạn đã deploy ở Bước 5
+
+**Bước 4:** Chạy lệnh:
+```bash
 npx ts-node scripts/interact_live.ts
--- Kết quả sẽ trả về Transaction Hash thực tế trên Blockchain.
+```
 
-Các lỗi thường gặp và Cách xử lý (Troubleshooting)
-1. Lỗi "Insufficient funds for gas * price + value"
--- Nguyên nhân: Ví của bạn không đủ ETH/BNB để trả phí giao dịch. -- Xử lý: Vào Faucet để xin thêm token hoặc chuyển tiền từ ví khác sang. Kiểm tra lại xem bạn đang kết nối đúng mạng (Testnet hay Mainnet) chưa.
+**Kết quả:**
+```
+Interacting with contract at 0x5FbDB...
+Transaction sent: 0x9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c
+✅ Transaction confirmed!
+View on Etherscan: https://sepolia.etherscan.io/tx/0x9b8c...
+```
 
-2. Lỗi "Nonce too low" hoặc "Replacement transaction underpriced"
--- Nguyên nhân: Có một giao dịch trước đó đang bị treo (pending) hoặc nonce của ví bị lệch so với mạng lưới. -- Xử lý: -- Reset lại ví MetaMask (Cài đặt -> Nâng cao -> Xóa dữ liệu tab hoạt động). -- Hoặc chờ giao dịch cũ hoàn tất.
+### 6.3. Kiểm tra giao dịch trên Etherscan
 
-3. Lỗi "ProviderError: HttpProviderError"
--- Nguyên nhân: Kết nối tới RPC Node bị lỗi (mạng lag, hoặc API Key của Infura/Alchemy bị hết hạn/sai). -- Xử lý: Kiểm tra lại đường dẫn RPC_URL trong file .env. Thử đổi sang một RPC public khác.
+```
+1. Copy Transaction Hash (TxHash) từ terminal
+   ↓
+2. Mở sepolia.etherscan.io
+   ↓
+3. Dán TxHash vào ô tìm kiếm
+   ↓
+4. Xem chi tiết: Status (Success/Fail), Gas Used, Input Data
+```
 
-4. Lỗi "Contract has not been deployed to detected network"
--- Nguyên nhân: Bạn đang chạy script interact trên mạng A, nhưng địa chỉ contract bạn điền vào lại là địa chỉ deploy trên mạng B (hoặc Localhost). -- Xử lý: Deploy lại contract trên đúng mạng bạn muốn tương tác, sau đó cập nhật lại địa chỉ Contract Address vào file code.
+---
 
-5. Lỗi biên dịch (Compile Error)
--- Nguyên nhân: Phiên bản Solidity trong file config không khớp với code. -- Xử lý: Kiểm tra hardhat.config.ts và đảm bảo phiên bản solidity (ví dụ: "0.8.20") tương thích với pragma trong file .sol.
+## ⚠️ Xử lý lỗi thường gặp
+
+### ❌ Lỗi: "Insufficient funds for gas"
+
+**Nguyên nhân:** Ví không đủ ETH để trả phí giao dịch
+
+**Giải pháp:**
+```
+1. Kiểm tra số dư ví trên MetaMask
+2. Vào Faucet xin thêm ETH (Bước 4.2)
+3. Đảm bảo đang kết nối đúng mạng (Testnet, không phải Mainnet)
+```
+
+---
+
+### ❌ Lỗi: "Nonce too low"
+
+**Nguyên nhân:** Có giao dịch cũ đang bị treo hoặc nonce bị lệch
+
+**Giải pháp:**
+```
+1. Mở MetaMask
+2. Settings → Advanced → Reset Account
+3. Thử deploy lại
+```
+
+---
+
+### ❌ Lỗi: "ProviderError: HttpProviderError"
+
+**Nguyên nhân:** Kết nối RPC bị lỗi hoặc API Key sai
+
+**Giải pháp:**
+```
+1. Kiểm tra RPC_URL trong file .env
+2. Thử đổi sang RPC công khai:
+   RPC_URL=https://eth-sepolia.public.blastapi.io
+3. Nếu dùng Infura/Alchemy, kiểm tra API Key còn hạn không
+```
+
+---
+
+### ❌ Lỗi: "Contract has not been deployed to detected network"
+
+**Nguyên nhân:** Bạn deploy trên mạng A nhưng interact trên mạng B
+
+**Giải pháp:**
+```
+1. Kiểm tra lại địa chỉ Contract Address trong interact_live.ts
+2. Đảm bảo đang dùng cùng mạng (cùng RPC_URL)
+3. Deploy lại nếu cần
+```
+
+---
+
+### ❌ Lỗi biên dịch (Compile Error)
+
+**Nguyên nhân:** Phiên bản Solidity không khớp
+
+**Giải pháp:**
+```
+1. Mở hardhat.config.ts
+2. Tìm dòng:
+   solidity: "0.8.20"
+3. Mở file .sol, kiểm tra dòng:
+   pragma solidity ^0.8.20;
+4. Đảm bảo 2 phiên bản này khớp nhau
+```
+
+---
+
+## 📚 Thuật ngữ cần biết
+
+| Thuật ngữ | Giải thích |
+|-----------|-----------|
+| **Smart Contract** | Chương trình chạy tự động trên Blockchain |
+| **Deploy** | Triển khai contract lên mạng |
+| **Gas Fee** | Phí giao dịch (trả bằng ETH/BNB) |
+| **Private Key** | Khóa bí mật để ký giao dịch (tuyệt mật!) |
+| **Public Address** | Địa chỉ ví công khai (có thể chia sẻ) |
+| **ABI** | Danh sách các hàm trong contract |
+| **Testnet** | Mạng thử nghiệm (ETH miễn phí) |
+| **Mainnet** | Mạng chính thức (ETH thật, có giá trị) |
+| **RPC** | Cổng kết nối đến Blockchain |
+| **Transaction Hash** | Mã định danh giao dịch |
+
+---
+
+## 🆘 Cần hỗ trợ?
+
+- **Xem log chi tiết:** Chạy lệnh với flag `--verbose`
+  ```bash
+  npx hardhat run scripts/deploy.ts --network sepolia --verbose
+  ```
+
+- **Kiểm tra cấu hình mạng:** Xem file `hardhat.config.ts`
+
+- **Xóa cache:** Nếu code thay đổi mà không chạy
+  ```bash
+  npx hardhat clean
+  npm install
+  ```
+
+---
+
+## 🎉 Chúc mừng!
+
+Bạn đã hoàn thành toàn bộ quy trình từ cài đặt đến tương tác với Smart Contract. Giờ đây bạn có thể:
+
+- ✅ Deploy contract lên Blockchain
+- ✅ Tương tác với contract đã deploy
+- ✅ Kiểm tra giao dịch trên Etherscan
+- ✅ Xử lý các lỗi cơ bản
+----
