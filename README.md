@@ -29,7 +29,7 @@ npm install
 yarn install
 Cấu hình Môi trường (.env)
 Bạn cần tạo một file .env tại thư mục gốc để chứa các thông tin bảo mật. Tuyệt đối không push file này lên Git.
-
+```
 -- Tạo file .env với nội dung mẫu:
 
 Đoạn mã
